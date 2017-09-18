@@ -43,9 +43,14 @@
                     </div>
                 </div>
             </div>
+        <span class="course-video-settings-title"><%- gettext('Transcript Settings') %></span>
+        <div class='course-video-settings-content'>
+            <div class='transcript-preferance-wrapper transcript-provider-wrapper'></div>
+            <div class='course-video-transcript-preferances-wrapper'></div>
+            <div class='organization-credentials-wrapper'></div>
         </div>
         <div class='course-video-settings-footer'>
-            <button class="button button action-update-course-video-settings" aria-describedby='update-button-text'>
+            <button class="button action-update-course-video-settings" aria-describedby='update-button-text'>
                 <%- gettext('Update Settings') %>
                 <span id='update-button-text' class='sr'><%-gettext('Press update settings to update course video settings') %></span>
             </button>
