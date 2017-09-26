@@ -19,6 +19,7 @@ var wpconfig = {
 
     entry: {
         // Studio
+        AssetsPage: './node_modules/@edx/studio-frontend/src/index.jsx',
         Import: './cms/static/js/features/import/factories/import.js',
         StudioIndex: './cms/static/js/features_jsx/studio/index.jsx',
 
@@ -108,6 +109,42 @@ var wpconfig = {
                     namespacedRequireFiles
                 ],
                 use: 'babel-loader'
+            },
+            {
+                test: /\.(js|jsx)$/,
+                include: [
+                    /studio-frontend/,
+                    /paragon/
+                ],
+                use: 'babel-loader'
+            },
+            {
+                test: /.scss$/,
+                include: [
+                    /studio-frontend/,
+                    /paragon/
+                ],
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: true,
+                            modules: true,
+                            localIdentName: '[path][name]__[local]--[hash:base64:5]'
+                        }
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            sourceMap: true,
+                            data: '@import "bootstrap/scss/bootstrap-reboot";',
+                            includePaths: [
+                                path.join(__dirname, './node_modules/')
+                            ]
+                        }
+                    }
+                ]
             },
             {
                 test: /\.coffee$/,
