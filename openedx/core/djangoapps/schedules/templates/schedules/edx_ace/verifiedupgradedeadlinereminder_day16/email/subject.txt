@@ -1,0 +1,7 @@
+{% load i18n %}
+
+{% if courses|length > 1 %}
+{% blocktrans %}Only sixteen days left to upgrade on {{ platform_name }}!{% endblocktrans %}
+{% else %}
+{% blocktrans %}Only sixteen days left to upgrade in {{course_name}} !{% endblocktrans %}
+{% endif %}
