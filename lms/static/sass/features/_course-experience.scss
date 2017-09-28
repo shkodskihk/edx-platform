@@ -3,9 +3,12 @@
 
 // Course call to action message
 .course-message {
+  display: flex;
+
   .message-author {
     display: inline-block;
     width: 70px;
+    height: 70px;
     border-radius: $baseline*7/4;
     border: 1px solid $lms-border-color;
 
@@ -97,7 +100,7 @@
           position: absolute;
           top: $baseline/2;
           font-size: font-size(small);
-          color: $uxpl-blue-base;
+          color: theme-color("primary");
           cursor: pointer;
 
           &:hover {
@@ -152,9 +155,6 @@
 
 // Course sidebar
 .course-sidebar {
-  @include margin-left(0);
-  @include padding-left($baseline);
-
   .section-tools li:not(:first-child) {
     margin-top: ($baseline / 5);
   }
@@ -166,6 +166,7 @@
 
   .block-tree {
     margin: 0;
+    padding: 0;
     list-style-type: none;
 
     .section {
@@ -197,7 +198,7 @@
 
       ol.outline-item {
         padding-bottom: $baseline;
-        border-bottom: 1px solid $light-grey-solid;
+        border-bottom: 1px solid $lms-border-color;
         margin: 0 0 ($baseline / 2) 0;
 
         .subsection {
@@ -268,7 +269,7 @@
     padding: $baseline/2;
 
     .heading {
-      font-size: 1.1rem;
+      font-size: 0.9rem;
       line-height: 1;
       font-weight: $font-bold;
       color: $lms-gray;

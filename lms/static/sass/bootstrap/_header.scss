@@ -1,0 +1,13 @@
+// Open edX: LMS header
+// ====================
+
+.header-global {
+  .logo img {
+    height: 30px;
+  }
+
+  // User menu
+  .navigation-container .navbar .nav-item .dropdown-toggle {
+    color: inherit;
+  }
+}
