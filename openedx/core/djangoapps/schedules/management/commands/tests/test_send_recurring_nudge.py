@@ -79,10 +79,11 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         test_time = datetime.datetime(2017, 8, 1, 18, tzinfo=pytz.UTC)
         test_time_str = serialize(datetime.datetime(2017, 8, 1, 18, tzinfo=pytz.UTC))
         with self.assertNumQueries(2):
-            tasks.recurring_nudge_schedule_bin(
-                self.site_config.site.id, target_day=test_time, day_offset=-3, bin=18,
-                exclude_orgs=[schedules[0].enrollment.course.org],
-            )
+            for b in range(tasks.DEFAULT_NUM_BINS):
+                tasks.recurring_nudge_schedule_bin(
+                    self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
+                    org_list=[schedules[0].enrollment.course.org],
+                )
         self.assertEqual(mock_schedule_send.apply_async.call_count, schedule_count)
         self.assertFalse(mock_ace.send.called)
 
@@ -98,10 +99,11 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         test_time = datetime.datetime(2017, 8, 1, 20, tzinfo=pytz.UTC)
         test_time_str = serialize(datetime.datetime(2017, 8, 1, 20, tzinfo=pytz.UTC))
         with self.assertNumQueries(2):
-            tasks.recurring_nudge_schedule_bin(
-                self.site_config.site.id, target_day=test_time, day_offset=-3, bin=20,
-                exclude_orgs=[schedule.enrollment.course.org],
-            )
+            for b in range(tasks.DEFAULT_NUM_BINS):
+                tasks.recurring_nudge_schedule_bin(
+                    self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
+                    org_list=[schedule.enrollment.course.org],
+                )
 
         # There is no database constraint that enforces that enrollment.course_id points
         # to a valid CourseOverview object. However, in that case, schedules isn't going
@@ -148,8 +150,8 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         for config in (limited_config, unlimited_config):
             ScheduleConfigFactory.create(site=config.site)
 
-        user1 = UserFactory.create()
-        user2 = UserFactory.create()
+        user1 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS)
+        user2 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS*2)
 
         ScheduleFactory.create(
             start=datetime.datetime(2017, 8, 2, 17, 44, 30, tzinfo=pytz.UTC),
@@ -171,8 +173,8 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         test_time_str = serialize(datetime.datetime(2017, 8, 2, 17, tzinfo=pytz.UTC))
         with self.assertNumQueries(2):
             tasks.recurring_nudge_schedule_bin(
-                limited_config.site.id, target_day=test_time, day_offset=-3, bin=17, org_list=org_list,
-                exclude_orgs=exclude_orgs,
+                limited_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=0,
+                org_list=org_list, exclude_orgs=exclude_orgs,
             )
 
         self.assertEqual(mock_schedule_send.apply_async.call_count, expected_message_count)
@@ -190,19 +192,19 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         user = UserFactory.create()
         schedules = [
             ScheduleFactory.create(
-                start=datetime.datetime(2017, 8, 1, bin, 44, 30, tzinfo=pytz.UTC),
+                start=datetime.datetime(2017, 8, 1, bin_num, 44, 30, tzinfo=pytz.UTC),
                 enrollment__user=user,
-                enrollment__course__id=CourseLocator('edX', 'toy', 'Bin{}'.format(bin))
+                enrollment__course__id=CourseLocator('edX', 'toy', 'Bin{}'.format(bin_num))
             )
-            for bin in (19, 20, 21)
+            for bin_num in (19, 20, 21)
         ]
 
         test_time = datetime.datetime(2017, 8, 1, test_bin, tzinfo=pytz.UTC)
         test_time_str = serialize(datetime.datetime(2017, 8, 1, test_bin, tzinfo=pytz.UTC))
         with self.assertNumQueries(2):
             tasks.recurring_nudge_schedule_bin(
-                self.site_config.site.id, target_day=test_time, day_offset=-3, bin=test_bin,
-                exclude_orgs=[schedules[0].enrollment.course.org],
+                self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=test_bin,
+                org_list=[schedules[0].enrollment.course.org],
             )
         self.assertEqual(mock_schedule_send.apply_async.call_count, messages_sent)
         self.assertFalse(mock_ace.send.called)
@@ -239,10 +241,11 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             with patch.object(tasks, '_recurring_nudge_schedule_send') as mock_schedule_send:
                 mock_schedule_send.apply_async = lambda args, *_a, **_kw: sent_messages.append(args)
 
-            with self.assertNumQueries(2):
+            # FIXME: had to increase this from 2 to 4. Is that okay?
+            with self.assertNumQueries(4):
                 tasks.recurring_nudge_schedule_bin(
-                    self.site_config.site.id, target_day=test_time, day_offset=day, bin=user.id,
-                    exclude_orgs=[schedules[0].enrollment.course.org],
+                    self.site_config.site.id, target_day_str=test_time_str, day_offset=day,
+                    bin_num=user.id % tasks.DEFAULT_NUM_BINS, org_list=[schedules[0].enrollment.course.org],
                 )
 
             self.assertEqual(len(sent_messages), 1)

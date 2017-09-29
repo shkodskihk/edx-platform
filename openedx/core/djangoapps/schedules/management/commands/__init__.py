@@ -5,6 +5,7 @@ import pytz
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from edx_ace.recipient_resolver import RecipientResolver
+from edx_ace.utils.date import serialize
 
 from openedx.core.djangoapps.schedules.models import ScheduleConfig
 from openedx.core.djangoapps.schedules.tasks import DEFAULT_NUM_BINS
@@ -46,7 +47,7 @@ class BinnedSchedulesBaseResolver(RecipientResolver, PrefixedDebugLoggerMixin):
         self.log_debug('Target date = %s', target_date.isoformat())
         for bin in range(self.num_bins):
             task_args = (
-                self.site.id, target_date, day_offset, bin, org_list, exclude_orgs, override_recipient_email,
+                self.site.id, serialize(target_date), day_offset, bin, org_list, exclude_orgs, override_recipient_email,
             )
             self.log_debug('Launching task with args = %r', task_args)
             self.async_send_task.apply_async(

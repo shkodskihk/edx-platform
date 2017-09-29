@@ -163,8 +163,9 @@ def _recurring_nudge_schedules_for_hour(target_hour, org_list, exclude_orgs=Fals
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
 def recurring_nudge_schedule_bin(
-    site_id, target_day, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
+    site_id, target_day_str, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
 ):
+    target_day = deserialize(target_day_str)
     msg_type = RecurringNudge(abs(day_offset))
 
     for (user, language, context) in _recurring_nudge_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs):
@@ -244,8 +245,9 @@ class VerifiedUpgradeDeadlineReminder(ScheduleMessageType):
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
 def verified_deadline_reminder_schedule_bin(
-    site_id, target_day, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
+    site_id, target_day_str, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
 ):
+    target_day = deserialize(target_day_str)
     msg_type = VerifiedUpgradeDeadlineReminder(abs(day_offset))
 
     for (user, language, context) in _verified_deadline_reminder_schedules_for_bin(target_day, bin_num, org_list,
