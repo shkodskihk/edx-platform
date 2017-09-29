@@ -1698,7 +1698,7 @@ class CourseEnrollment(models.Model):
 
     @cached_property
     def verified_mode(self):
-        return CourseMode.verified_mode_for_course(self.course_id, self.course.modes.all())
+        return CourseMode.verified_mode_for_course(self.course_id)
 
     @cached_property
     def upgrade_deadline(self):
