@@ -28,6 +28,7 @@ class Command(SendEmailBaseCommand):
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
         self.resolver_class = VerifiedDeadlineResolver
+        self.log_prefix = 'Verified Deadline Reminder'
 
     def send_emails(self, resolver, *args, **options):
         logging.basicConfig(level=logging.DEBUG)

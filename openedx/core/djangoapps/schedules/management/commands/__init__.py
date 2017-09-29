@@ -74,12 +74,12 @@ class SendEmailBaseResolver(RecipientResolver, PrefixedDebugLoggerMixin):
             if not org_list:
                 not_orgs = set()
                 for other_site_config in SiteConfiguration.objects.all():
-                    if not isinstance(other_site_config, list):
-                        other = other_site_config.get_value('course_org_filter')
-                        if other:
+                    other = other_site_config.get_value('course_org_filter')
+                    if not isinstance(other, list):
+                        if other is not None:
                             not_orgs.add(other)
                     else:
-                        not_orgs.update(other_site_config.get_value('course_org_filter', default=[]))
+                        not_orgs.update(other)
                 org_list = list(not_orgs)
                 exclude_orgs = True
             elif not isinstance(org_list, list):
@@ -95,6 +95,7 @@ class SendEmailBaseCommand(BaseCommand, PrefixedDebugLoggerMixin):
     def __init__(self, *args, **kwargs):
         super(SendEmailBaseCommand, self).__init__(*args, **kwargs)
         self.resolver_class = SendEmailBaseResolver
+        self.log_prefix = self.__class__.__name__
 
     def add_arguments(self, parser):
         parser.add_argument(

@@ -2,10 +2,15 @@ import datetime
 from unittest import skipUnless
 
 import ddt
+import pytz
 from django.conf import settings
-from mock import patch
+from mock import patch, Mock
 
-from openedx.core.djangoapps.schedules.management.commands import DEFAULT_NUM_BINS, SendEmailBaseResolver
+from openedx.core.djangoapps.schedules.management.commands import (
+    DEFAULT_NUM_BINS,
+    SendEmailBaseCommand,
+    SendEmailBaseResolver
+)
 from openedx.core.djangoapps.schedules.tests.factories import ScheduleConfigFactory, ScheduleFactory
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteConfigurationFactory, SiteFactory
 from openedx.core.djangolib.testing.utils import CacheIsolationTestCase, skip_unless_lms
@@ -90,22 +95,55 @@ class TestSendEmailBaseResolver(CacheIsolationTestCase):
         exclude_orgs, org_list = resolver.get_course_org_filter()
         assert not exclude_orgs
         assert org_list == expected_org_list
-        self.site_config.delete()
 
+    # factory_boy doesn't make sense at all
     @ddt.unpack
     @ddt.data(
         (None, []),
-        ('course1', ['course1']),
-        (['course1', 'course2'], ['course1', 'course2'])
+        ('course1', [u'course1']),
+        (['course1', 'course2'], [u'course1', u'course2'])
     )
     def test_get_course_org_filter_exclude(self, course_org_filter, expected_org_list):
         resolver = self.setup_resolver()
-        other_site = SiteFactory.create()
-        other_site_config = SiteConfigurationFactory.create(site=other_site)
-        other_site_config.values['course_org_filter'] = course_org_filter
-        other_site_config.save()
+        self.other_site = SiteFactory.create()
+        self.other_site_config = SiteConfigurationFactory.create(
+            site=self.other_site,
+            values={'course_org_filter': course_org_filter},
+        )
         exclude_orgs, org_list = resolver.get_course_org_filter()
         assert exclude_orgs
-        assert org_list == expected_org_list
-        other_site.delete()
-        other_site_config.delete()
+        self.assertItemsEqual(org_list, expected_org_list)
+
+
+@ddt.ddt
+@skip_unless_lms
+@skipUnless('openedx.core.djangoapps.schedules.apps.SchedulesConfig' in settings.INSTALLED_APPS,
+            "Can't test schedules if the app isn't installed")
+class TestSendEmailBaseCommand(CacheIsolationTestCase):
+    def setUp(self):
+        self.command = SendEmailBaseCommand()
+
+    def test_init_resolver_class(self):
+        assert self.command.resolver_class == SendEmailBaseResolver
+
+    def test_make_resolver(self):
+        with patch.object(self.command, 'resolver_class') as resolver_class:
+            example_site = SiteFactory(domain='example.com')
+            self.command.make_resolver(site_domain_name='example.com', date='2017-09-29')
+            resolver_class.assert_called_once_with(
+                example_site,
+                datetime.datetime(2017, 9, 29, tzinfo=pytz.UTC)
+            )
+
+    def test_send_emails(self):
+        resolver = Mock()
+        self.command.send_emails(resolver, override_recipient_email='foo@example.com')
+        resolver.send.assert_called_once_with(0, 'foo@example.com')
+
+    def test_handle(self):
+        with patch.object(self.command, 'make_resolver') as make_resolver:
+            make_resolver.return_value = 'resolver'
+            with patch.object(self.command, 'send_emails') as send_emails:
+                self.command.handle(date='2017-09-29')
+                make_resolver.assert_called_once_with(date='2017-09-29')
+                send_emails.assert_called_once_with('resolver', date='2017-09-29')
