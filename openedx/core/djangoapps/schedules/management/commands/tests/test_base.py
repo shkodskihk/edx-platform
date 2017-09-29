@@ -9,7 +9,7 @@ from mock import patch, Mock
 from openedx.core.djangoapps.schedules.management.commands import (
     DEFAULT_NUM_BINS,
     SendEmailBaseCommand,
-    SendEmailBaseResolver
+    BinnedSchedulesBaseResolver
 )
 from openedx.core.djangoapps.schedules.tests.factories import ScheduleConfigFactory, ScheduleFactory
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteConfigurationFactory, SiteFactory
@@ -20,9 +20,9 @@ from openedx.core.djangolib.testing.utils import CacheIsolationTestCase, skip_un
 @skip_unless_lms
 @skipUnless('openedx.core.djangoapps.schedules.apps.SchedulesConfig' in settings.INSTALLED_APPS,
             "Can't test schedules if the app isn't installed")
-class TestSendEmailBaseResolver(CacheIsolationTestCase):
+class TestBinnedSchedulesBaseResolver(CacheIsolationTestCase):
     def setUp(self):
-        super(TestSendEmailBaseResolver, self).setUp()
+        super(TestBinnedSchedulesBaseResolver, self).setUp()
 
         self.site = SiteFactory.create()
         self.site_config = SiteConfigurationFactory.create(site=self.site)
@@ -33,7 +33,7 @@ class TestSendEmailBaseResolver(CacheIsolationTestCase):
             site = self.site
         if current_date is None:
             current_date = datetime.datetime.now()
-        resolver = SendEmailBaseResolver(self.site, current_date)
+        resolver = BinnedSchedulesBaseResolver(self.site, current_date)
         return resolver
 
     def test_init_site(self):
@@ -124,7 +124,7 @@ class TestSendEmailBaseCommand(CacheIsolationTestCase):
         self.command = SendEmailBaseCommand()
 
     def test_init_resolver_class(self):
-        assert self.command.resolver_class == SendEmailBaseResolver
+        assert self.command.resolver_class == BinnedSchedulesBaseResolver
 
     def test_make_resolver(self):
         with patch.object(self.command, 'resolver_class') as resolver_class:

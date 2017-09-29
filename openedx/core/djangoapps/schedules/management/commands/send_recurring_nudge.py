@@ -2,13 +2,13 @@ from __future__ import print_function
 
 import logging
 
-from openedx.core.djangoapps.schedules.management.commands import SendEmailBaseCommand, SendEmailBaseResolver
+from openedx.core.djangoapps.schedules.management.commands import SendEmailBaseCommand, BinnedSchedulesBaseResolver
 from openedx.core.djangoapps.schedules.tasks import RECURRING_NUDGE_NUM_BINS, recurring_nudge_schedule_bin
 
 LOG = logging.getLogger(__name__)
 
 
-class ScheduleStartResolver(SendEmailBaseResolver):
+class ScheduleStartResolver(BinnedSchedulesBaseResolver):
     """
     Send a message to all users whose schedule started at ``self.current_date`` + ``day_offset``.
     """

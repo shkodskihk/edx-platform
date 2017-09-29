@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import logging
 
-from openedx.core.djangoapps.schedules.management.commands import SendEmailBaseCommand, SendEmailBaseResolver
+from openedx.core.djangoapps.schedules.management.commands import SendEmailBaseCommand, BinnedSchedulesBaseResolver
 from openedx.core.djangoapps.schedules.tasks import (
     VERIFIED_DEADLINE_REMINDER_NUM_BINS,
     verified_deadline_reminder_schedule_bin
@@ -12,7 +12,7 @@ from openedx.core.djangoapps.schedules.tasks import (
 LOG = logging.getLogger(__name__)
 
 
-class VerifiedDeadlineResolver(SendEmailBaseResolver):
+class VerifiedDeadlineResolver(BinnedSchedulesBaseResolver):
     """
     Send a message to all users whose verified upgrade deadline is at ``self.current_date`` + ``day_offset``.
     """
@@ -32,5 +32,4 @@ class Command(SendEmailBaseCommand):
 
     def send_emails(self, resolver, *args, **options):
         logging.basicConfig(level=logging.DEBUG)
-        for day_offset in (2, 9, 16):
-            resolver.send(day_offset, options.get('override_recipient_email'))
+        resolver.send(2, options.get('override_recipient_email'))

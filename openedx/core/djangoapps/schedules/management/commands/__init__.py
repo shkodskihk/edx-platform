@@ -22,12 +22,12 @@ class PrefixedDebugLoggerMixin(object):
         LOG.debug(self.log_prefix + ': ' + message, *args, **kwargs)
 
 
-class SendEmailBaseResolver(RecipientResolver, PrefixedDebugLoggerMixin):
+class BinnedSchedulesBaseResolver(RecipientResolver, PrefixedDebugLoggerMixin):
     """
     Starts num_bins number of async tasks, each of which sends emails to an equal group of learners.
     """
     def __init__(self, site, current_date, *args, **kwargs):
-        super(SendEmailBaseResolver, self).__init__(*args, **kwargs)
+        super(BinnedSchedulesBaseResolver, self).__init__(*args, **kwargs)
         self.site = site
         self.current_date = current_date.replace(hour=0, minute=0, second=0)
         self.async_send_task = None  # define in subclasses
@@ -50,6 +50,7 @@ class SendEmailBaseResolver(RecipientResolver, PrefixedDebugLoggerMixin):
             )
             self.log_debug('Launching task with args = %r', task_args)
             self.async_send_task.apply_async(
+                task_args,
                 retry=False,
             )
 
@@ -94,7 +95,7 @@ class SendEmailBaseResolver(RecipientResolver, PrefixedDebugLoggerMixin):
 class SendEmailBaseCommand(BaseCommand, PrefixedDebugLoggerMixin):
     def __init__(self, *args, **kwargs):
         super(SendEmailBaseCommand, self).__init__(*args, **kwargs)
-        self.resolver_class = SendEmailBaseResolver
+        self.resolver_class = BinnedSchedulesBaseResolver
         self.log_prefix = self.__class__.__name__
 
     def add_arguments(self, parser):

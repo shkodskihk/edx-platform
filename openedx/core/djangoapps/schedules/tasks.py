@@ -1,10 +1,8 @@
 import datetime
 from itertools import groupby
 import logging
-from urlparse import urlparse
 
 from celery.task import task
-from dateutil.tz import gettz, tzutc
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -12,7 +10,6 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import F, Min, Prefetch
 from django.db.utils import DatabaseError
-from django.utils.http import urlquote
 
 from edx_ace import ace
 from edx_ace.message import Message
@@ -20,9 +17,8 @@ from edx_ace.recipient import Recipient
 from edx_ace.utils.date import deserialize
 from opaque_keys.edx.keys import CourseKey
 
-from course_modes.models import CourseMode, format_course_price
+from course_modes.models import CourseMode
 from edxmako.shortcuts import marketing_link
-from lms.djangoapps.experiments.utils import check_and_get_upgrade_link
 from openedx.core.djangoapps.schedules.message_type import ScheduleMessageType
 from openedx.core.djangoapps.schedules.models import Schedule, ScheduleConfig
 from openedx.core.djangoapps.schedules.template_context import (
@@ -167,11 +163,11 @@ def _recurring_nudge_schedules_for_hour(target_hour, org_list, exclude_orgs=Fals
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
 def recurring_nudge_schedule_bin(
-    site_id, target_day, day_offset, bin, org_list, exclude_orgs=False, override_recipient_email=None,
+    site_id, target_day, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
 ):
     msg_type = RecurringNudge(abs(day_offset))
 
-    for (user, language, context) in _recurring_nudge_schedules_for_bin(target_day, bin, org_list, exclude_orgs):
+    for (user, language, context) in _recurring_nudge_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs):
         msg = msg_type.personalize(
             Recipient(
                 user.username,
@@ -183,7 +179,7 @@ def recurring_nudge_schedule_bin(
         _recurring_nudge_schedule_send.apply_async((site_id, str(msg)), retry=False)
 
 
-def _recurring_nudge_schedules_for_bin(target_day, bin, org_list, exclude_orgs=False):
+def _recurring_nudge_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs=False):
     beginning_of_day = target_day.replace(hour=0, minute=0, second=0)
     users = User.objects.filter(
         courseenrollment__schedule__start__gte=beginning_of_day,
@@ -194,7 +190,7 @@ def _recurring_nudge_schedules_for_bin(target_day, bin, org_list, exclude_orgs=F
     ).annotate(
         id_mod=F('id') % RECURRING_NUDGE_NUM_BINS
     ).filter(
-        id_mod=bin
+        id_mod=bin_num
     )
 
     if org_list is not None:
@@ -243,16 +239,16 @@ def _recurring_nudge_schedules_for_bin(target_day, bin, org_list, exclude_orgs=F
 class VerifiedUpgradeDeadlineReminder(ScheduleMessageType):
     def __init__(self, day, *args, **kwargs):
         super(VerifiedUpgradeDeadlineReminder, self).__init__(*args, **kwargs)
-        self.name = "verifiedupgradedeadlinereminder_day{}".format(day)
+        self.name = "verifiedupgradedeadlinereminder".format(day)
 
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
 def verified_deadline_reminder_schedule_bin(
-    site_id, target_day, day_offset, bin, org_list, exclude_orgs=False, override_recipient_email=None,
+    site_id, target_day, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
 ):
     msg_type = VerifiedUpgradeDeadlineReminder(abs(day_offset))
 
-    for (user, language, context) in _verified_deadline_reminder_schedules_for_bin(target_day, bin, org_list,
+    for (user, language, context) in _verified_deadline_reminder_schedules_for_bin(target_day, bin_num, org_list,
                                                                                    exclude_orgs):
         msg = msg_type.personalize(
             Recipient(
@@ -275,7 +271,7 @@ def _verified_deadline_reminder_schedule_send(site_id, msg_str):
     ace.send(msg)
 
 
-def _verified_deadline_reminder_schedules_for_bin(target_day, bin, org_list, exclude_orgs=False):
+def _verified_deadline_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs=False):
     schedules = Schedule.objects.select_related(
         'enrollment__user__profile',
         'enrollment__course',
@@ -293,7 +289,7 @@ def _verified_deadline_reminder_schedules_for_bin(target_day, bin, org_list, exc
     ).annotate(
         id_mod=F('enrollment__user__id') % VERIFIED_DEADLINE_REMINDER_NUM_BINS
     ).filter(
-        id_mod=bin
+        id_mod=bin_num
     ).filter(
         upgrade_deadline__year=target_day.year,
         upgrade_deadline__month=target_day.month,
