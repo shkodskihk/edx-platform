@@ -191,9 +191,12 @@ class EnterpriseServiceMockMixin(object):
                     },
                     'data_sharing_consent': [
                         {
-                            'user': 1,
-                            'state': 'enabled',
-                            'enabled': True
+                            "username": "verified",
+                            "enterprise_customer_uuid": enterprise_customer_uuid,
+                            "exists": True,
+                            "course_id": "course-v1:edX DemoX Demo_Course",
+                            "consent_provided": True,
+                            "consent_required": False
                         }
                     ]
                 }
