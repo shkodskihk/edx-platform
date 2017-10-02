@@ -7,7 +7,6 @@ import attr
 import ddt
 import pytz
 from django.conf import settings
-from django.test import override_settings
 from edx_ace.channel import ChannelType
 from edx_ace.test_utils import StubPolicy, patch_channels, patch_policies
 from edx_ace.utils.date import serialize
@@ -72,13 +71,16 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
     @patch.object(tasks, '_recurring_nudge_schedule_send')
     def test_schedule_bin(self, schedule_count, mock_schedule_send, mock_ace):
         schedules = [
-            ScheduleFactory.create(start=datetime.datetime(2017, 8, 1, 18, 34, 30, tzinfo=pytz.UTC))
-            for _ in range(schedule_count)
+            ScheduleFactory.create(
+                start=datetime.datetime(2017, 8, 3, 18, 44, 30, tzinfo=pytz.UTC),
+                enrollment__user=UserFactory.create(),
+                enrollment__course__id=CourseLocator('edX', 'toy', 'Bin')
+            ) for _ in range(schedule_count)
         ]
 
-        test_time = datetime.datetime(2017, 8, 1, 18, tzinfo=pytz.UTC)
-        test_time_str = serialize(datetime.datetime(2017, 8, 1, 18, tzinfo=pytz.UTC))
-        with self.assertNumQueries(2):
+        test_time = datetime.datetime(2017, 8, 3, 18, tzinfo=pytz.UTC)
+        test_time_str = serialize(test_time)
+        with self.assertNumQueries(25):
             for b in range(tasks.DEFAULT_NUM_BINS):
                 tasks.recurring_nudge_schedule_bin(
                     self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
@@ -91,14 +93,14 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
     def test_no_course_overview(self, mock_schedule_send):
 
         schedule = ScheduleFactory.create(
-            start=datetime.datetime(2017, 8, 1, 20, 34, 30, tzinfo=pytz.UTC),
+            start=datetime.datetime(2017, 8, 3, 20, 34, 30, tzinfo=pytz.UTC),
         )
         schedule.enrollment.course_id = CourseKey.from_string('edX/toy/Not_2012_Fall')
         schedule.enrollment.save()
 
-        test_time = datetime.datetime(2017, 8, 1, 20, tzinfo=pytz.UTC)
-        test_time_str = serialize(datetime.datetime(2017, 8, 1, 20, tzinfo=pytz.UTC))
-        with self.assertNumQueries(2):
+        test_time = datetime.datetime(2017, 8, 3, 20, tzinfo=pytz.UTC)
+        test_time_str = serialize(test_time)
+        with self.assertNumQueries(25):
             for b in range(tasks.DEFAULT_NUM_BINS):
                 tasks.recurring_nudge_schedule_bin(
                     self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
@@ -154,23 +156,23 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         user2 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS*2)
 
         ScheduleFactory.create(
-            start=datetime.datetime(2017, 8, 2, 17, 44, 30, tzinfo=pytz.UTC),
+            start=datetime.datetime(2017, 8, 3, 17, 44, 30, tzinfo=pytz.UTC),
             enrollment__course__org=filtered_org,
             enrollment__user=user1,
         )
         ScheduleFactory.create(
-            start=datetime.datetime(2017, 8, 2, 17, 44, 30, tzinfo=pytz.UTC),
+            start=datetime.datetime(2017, 8, 3, 17, 44, 30, tzinfo=pytz.UTC),
             enrollment__course__org=unfiltered_org,
             enrollment__user=user1,
         )
         ScheduleFactory.create(
-            start=datetime.datetime(2017, 8, 2, 17, 44, 30, tzinfo=pytz.UTC),
+            start=datetime.datetime(2017, 8, 3, 17, 44, 30, tzinfo=pytz.UTC),
             enrollment__course__org=unfiltered_org,
             enrollment__user=user2,
         )
 
-        test_time = datetime.datetime(2017, 8, 2, 17, tzinfo=pytz.UTC)
-        test_time_str = serialize(datetime.datetime(2017, 8, 2, 17, tzinfo=pytz.UTC))
+        test_time = datetime.datetime(2017, 8, 3, 17, tzinfo=pytz.UTC)
+        test_time_str = serialize(test_time)
         with self.assertNumQueries(2):
             tasks.recurring_nudge_schedule_bin(
                 limited_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=0,
@@ -192,15 +194,15 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         user = UserFactory.create()
         schedules = [
             ScheduleFactory.create(
-                start=datetime.datetime(2017, 8, 1, bin_num, 44, 30, tzinfo=pytz.UTC),
+                start=datetime.datetime(2017, 8, 3, 19, 44, 30, tzinfo=pytz.UTC),
                 enrollment__user=user,
                 enrollment__course__id=CourseLocator('edX', 'toy', 'Bin{}'.format(bin_num))
             )
             for bin_num in (19, 20, 21)
         ]
 
-        test_time = datetime.datetime(2017, 8, 1, test_bin, tzinfo=pytz.UTC)
-        test_time_str = serialize(datetime.datetime(2017, 8, 1, test_bin, tzinfo=pytz.UTC))
+        test_time = datetime.datetime(2017, 8, 3, test_bin, tzinfo=pytz.UTC)
+        test_time_str = serialize(test_time)
         with self.assertNumQueries(2):
             tasks.recurring_nudge_schedule_bin(
                 self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=test_bin,
@@ -216,15 +218,15 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         user = UserFactory.create()
         schedules = [
             ScheduleFactory.create(
-                start=datetime.datetime(2017, 8, 1, 19, 44, 30, tzinfo=pytz.UTC),
+                start=datetime.datetime(2017, 8, 3, 19, 44, 30, tzinfo=pytz.UTC),
                 enrollment__user=user,
                 enrollment__course__id=CourseLocator('edX', 'toy', 'Bin{}'.format(idx))
             )
             for idx in range(message_count)
         ]
 
-        test_time = datetime.datetime(2017, 8, 1, 19, tzinfo=pytz.UTC)
-        test_time_str = serialize(datetime.datetime(2017, 8, 1, 19, tzinfo=pytz.UTC))
+        test_time = datetime.datetime(2017, 8, 3, 19, tzinfo=pytz.UTC)
+        test_time_str = serialize(test_time)
 
         patch_policies(self, [StubPolicy([ChannelType.PUSH])])
         mock_channel = Mock(
