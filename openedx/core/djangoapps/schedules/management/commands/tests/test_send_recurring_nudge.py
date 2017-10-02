@@ -153,7 +153,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             ScheduleConfigFactory.create(site=config.site)
 
         user1 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS)
-        user2 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS*2)
+        user2 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS * 2)
 
         ScheduleFactory.create(
             start=datetime.datetime(2017, 8, 3, 17, 44, 30, tzinfo=pytz.UTC),

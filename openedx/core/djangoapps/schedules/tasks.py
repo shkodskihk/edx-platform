@@ -194,12 +194,6 @@ def _recurring_nudge_schedules_for_bin(target_day, bin_num, org_list, exclude_or
         id_mod=bin_num
     )
 
-    if org_list is not None:
-        if exclude_orgs:
-            users = users.exclude(courseenrollment__course__org__in=org_list)
-        else:
-            users = users.filter(courseenrollment__course__org__in=org_list)
-
     schedules = Schedule.objects.select_related(
         'enrollment__user__profile',
         'enrollment__course',
