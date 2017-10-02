@@ -2832,6 +2832,7 @@ OPTIONAL_APPS = (
     ('consent', None),
     ('integrated_channels.integrated_channel', None),
     ('integrated_channels.sap_success_factors', None),
+    ('enterprise_reporting', None),
 
     # Required by the Enterprise App
     ('django_object_actions', None),  # https://github.com/crccheck/django-object-actions
@@ -3286,6 +3287,10 @@ ENTERPRISE_EXCLUDED_REGISTRATION_FIELDS = {
 }
 ENTERPRISE_CUSTOMER_COOKIE_NAME = 'enterprise_customer_uuid'
 BASE_COOKIE_DOMAIN = 'localhost'
+
+ENTERPRISE_REPORTING_VERTICA_HOST = ''
+ENTERPRISE_REPORTING_VERTICA_USERNAME = ''
+ENTERPRISE_REPORTING_VERTICA_PASSWORD = ''
 
 ############## Settings for Course Enrollment Modes ######################
 COURSE_ENROLLMENT_MODES = {
