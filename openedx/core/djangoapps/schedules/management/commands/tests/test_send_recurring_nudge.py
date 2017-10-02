@@ -81,7 +81,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         test_time = datetime.datetime(2017, 8, 3, 18, tzinfo=pytz.UTC)
         test_time_str = serialize(test_time)
         with self.assertNumQueries(25):
-            for b in range(tasks.DEFAULT_NUM_BINS):
+            for b in range(tasks.RECURRING_NUDGE_NUM_BINS):
                 tasks.recurring_nudge_schedule_bin(
                     self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
                     org_list=[schedules[0].enrollment.course.org],
@@ -101,7 +101,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         test_time = datetime.datetime(2017, 8, 3, 20, tzinfo=pytz.UTC)
         test_time_str = serialize(test_time)
         with self.assertNumQueries(25):
-            for b in range(tasks.DEFAULT_NUM_BINS):
+            for b in range(tasks.RECURRING_NUDGE_NUM_BINS):
                 tasks.recurring_nudge_schedule_bin(
                     self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
                     org_list=[schedule.enrollment.course.org],
@@ -152,8 +152,8 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         for config in (limited_config, unlimited_config):
             ScheduleConfigFactory.create(site=config.site)
 
-        user1 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS)
-        user2 = UserFactory.create(id=tasks.DEFAULT_NUM_BINS * 2)
+        user1 = UserFactory.create(id=tasks.RECURRING_NUDGE_NUM_BINS)
+        user2 = UserFactory.create(id=tasks.RECURRING_NUDGE_NUM_BINS * 2)
 
         ScheduleFactory.create(
             start=datetime.datetime(2017, 8, 3, 17, 44, 30, tzinfo=pytz.UTC),
@@ -182,33 +182,28 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         self.assertEqual(mock_schedule_send.apply_async.call_count, expected_message_count)
         self.assertFalse(mock_ace.send.called)
 
-    @ddt.data(
-        (19, 1),
-        (20, 0),
-        (21, 0)
-    )
-    @ddt.unpack
     @patch.object(tasks, 'ace')
     @patch.object(tasks, '_recurring_nudge_schedule_send')
-    def test_multiple_enrollments(self, test_bin, messages_sent, mock_schedule_send, mock_ace):
+    def test_multiple_enrollments(self, mock_schedule_send, mock_ace):
         user = UserFactory.create()
         schedules = [
             ScheduleFactory.create(
                 start=datetime.datetime(2017, 8, 3, 19, 44, 30, tzinfo=pytz.UTC),
                 enrollment__user=user,
-                enrollment__course__id=CourseLocator('edX', 'toy', 'Bin{}'.format(bin_num))
+                enrollment__course__id=CourseLocator('edX', 'toy', 'Course{}'.format(course_num))
             )
-            for bin_num in (19, 20, 21)
+            for course_num in (1, 2, 3)
         ]
 
-        test_time = datetime.datetime(2017, 8, 3, test_bin, tzinfo=pytz.UTC)
+        test_time = datetime.datetime(2017, 8, 3, 19, 44, 30, tzinfo=pytz.UTC)
         test_time_str = serialize(test_time)
         with self.assertNumQueries(2):
             tasks.recurring_nudge_schedule_bin(
-                self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=test_bin,
+                self.site_config.site.id, target_day_str=test_time_str, day_offset=-3,
+                bin_num=user.id % tasks.RECURRING_NUDGE_NUM_BINS,
                 org_list=[schedules[0].enrollment.course.org],
             )
-        self.assertEqual(mock_schedule_send.apply_async.call_count, messages_sent)
+        self.assertEqual(mock_schedule_send.apply_async.call_count, 1)
         self.assertFalse(mock_ace.send.called)
 
     @ddt.data(*itertools.product((1, 10, 100), (-3, -10)))
@@ -247,7 +242,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             with self.assertNumQueries(4):
                 tasks.recurring_nudge_schedule_bin(
                     self.site_config.site.id, target_day_str=test_time_str, day_offset=day,
-                    bin_num=user.id % tasks.DEFAULT_NUM_BINS, org_list=[schedules[0].enrollment.course.org],
+                    bin_num=user.id % tasks.RECURRING_NUDGE_NUM_BINS, org_list=[schedules[0].enrollment.course.org],
                 )
 
             self.assertEqual(len(sent_messages), 1)
