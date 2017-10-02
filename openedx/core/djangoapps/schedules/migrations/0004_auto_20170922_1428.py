@@ -13,12 +13,12 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='scheduleconfig',
-            name='deliver_verified_deadline_reminder',
+            name='deliver_upgrade_reminder',
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
             model_name='scheduleconfig',
-            name='enqueue_verified_deadline_reminder',
+            name='enqueue_upgrade_reminder',
             field=models.BooleanField(default=False),
         ),
     ]

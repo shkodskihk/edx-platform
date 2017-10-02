@@ -5,12 +5,12 @@
     {% if courses|length > 1 %}
         {% blocktrans trimmed %}
             We hope you are enjoying {{ course_name }}, and other courses on edX.org.
-            Upgrade by {{ user_schedule_verified_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
+            Upgrade by {{ user_schedule_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
         {% endblocktrans %}
     {% else %}
         {% blocktrans trimmed %}
             We hope you are enjoying {{ course_name }}.
-            Upgrade by {{ user_schedule_verified_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
+            Upgrade by {{ user_schedule_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
         {% endblocktrans %}
     {% endif %}
 {% endblock %}
@@ -25,13 +25,13 @@
                 {% if courses|length > 1 %}
                     {% blocktrans trimmed %}
                         We hope you are enjoying <strong>{{ course_name }}</strong>, and other courses on edX.org.
-                        {{ user_schedule_verified_upgrade_deadline_time|date }}
-                        Upgrade by {{ user_schedule_verified_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
+                        {{ user_schedule_upgrade_deadline_time|date }}
+                        Upgrade by {{ user_schedule_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
                     {% endblocktrans %}
                 {% else %}
                     {% blocktrans trimmed %}
                         We hope you are enjoying <strong>{{ course_name }}</strong>.
-                        Upgrade by {{ user_schedule_verified_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
+                        Upgrade by {{ user_schedule_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
                     {% endblocktrans %}
                 {% endif %}
             </p>

@@ -40,7 +40,7 @@ KNOWN_RETRY_ERRORS = (  # Errors we expect occasionally that could resolve on re
 )
 DEFAULT_NUM_BINS = 24
 RECURRING_NUDGE_NUM_BINS = DEFAULT_NUM_BINS
-VERIFIED_DEADLINE_REMINDER_NUM_BINS = DEFAULT_NUM_BINS
+UPGRADE_REMINDER_NUM_BINS = DEFAULT_NUM_BINS
 
 
 @task(bind=True, default_retry_delay=30, routing_key=ROUTING_KEY)
@@ -231,21 +231,20 @@ def _recurring_nudge_schedules_for_bin(target_day, bin_num, org_list, exclude_or
         yield (user, first_schedule.enrollment.course.language, template_context)
 
 
-class VerifiedUpgradeDeadlineReminder(ScheduleMessageType):
+class UpgradeReminder(ScheduleMessageType):
     def __init__(self, day, *args, **kwargs):
-        super(VerifiedUpgradeDeadlineReminder, self).__init__(*args, **kwargs)
-        self.name = "verifiedupgradedeadlinereminder".format(day)
+        super(UpgradeReminder, self).__init__(*args, **kwargs)
+        self.name = "upgradereminder".format(day)
 
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
-def verified_deadline_reminder_schedule_bin(
+def upgrade_reminder_schedule_bin(
     site_id, target_day_str, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
 ):
     target_day = deserialize(target_day_str)
-    msg_type = VerifiedUpgradeDeadlineReminder(abs(day_offset))
+    msg_type = UpgradeReminder(abs(day_offset))
 
-    for (user, language, context) in _verified_deadline_reminder_schedules_for_bin(target_day, bin_num, org_list,
-                                                                                   exclude_orgs):
+    for (user, language, context) in _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs):
         msg = msg_type.personalize(
             Recipient(
                 user.username,
@@ -254,20 +253,20 @@ def verified_deadline_reminder_schedule_bin(
             language,
             context,
         )
-        _verified_deadline_reminder_schedule_send.apply_async((site_id, str(msg)), retry=False)
+        _upgrade_reminder_schedule_send.apply_async((site_id, str(msg)), retry=False)
 
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
-def _verified_deadline_reminder_schedule_send(site_id, msg_str):
+def _upgrade_reminder_schedule_send(site_id, msg_str):
     site = Site.objects.get(pk=site_id)
-    if not ScheduleConfig.current(site).deliver_verified_deadline_reminder:
+    if not ScheduleConfig.current(site).deliver_upgrade_reminder:
         return
 
     msg = Message.from_string(msg_str)
     ace.send(msg)
 
 
-def _verified_deadline_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs=False):
+def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs=False):
     schedules = Schedule.objects.select_related(
         'enrollment__user__profile',
         'enrollment__course',
@@ -283,7 +282,7 @@ def _verified_deadline_reminder_schedules_for_bin(target_day, bin_num, org_list,
             to_attr='tzprefs'
         ),
     ).annotate(
-        id_mod=F('enrollment__user__id') % VERIFIED_DEADLINE_REMINDER_NUM_BINS
+        id_mod=F('enrollment__user__id') % UPGRADE_REMINDER_NUM_BINS
     ).filter(
         id_mod=bin_num
     ).filter(
@@ -310,7 +309,7 @@ def _verified_deadline_reminder_schedules_for_bin(target_day, bin_num, org_list,
         template_context.update({
             'student_name': user.profile.name,
             'user_personal_address': user.profile.name if user.profile.name else user.username,
-            'user_schedule_verified_upgrade_deadline_time': schedule.upgrade_deadline,
+            'user_schedule_upgrade_deadline_time': schedule.upgrade_deadline,
 
             'course_name': first_schedule.enrollment.course.display_name,
             'course_url': absolute_url(reverse('course_root', args=[str(first_schedule.enrollment.course_id)])),
