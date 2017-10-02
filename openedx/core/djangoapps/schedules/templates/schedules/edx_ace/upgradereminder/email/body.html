@@ -25,7 +25,6 @@
                 {% if courses|length > 1 %}
                     {% blocktrans trimmed %}
                         We hope you are enjoying <strong>{{ course_name }}</strong>, and other courses on edX.org.
-                        {{ user_schedule_upgrade_deadline_time|date }}
                         Upgrade by {{ user_schedule_upgrade_deadline_time|date:"l, F dS, Y" }} to get a shareable certificate!
                     {% endblocktrans %}
                 {% else %}

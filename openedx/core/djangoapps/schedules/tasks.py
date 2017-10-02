@@ -267,29 +267,34 @@ def _upgrade_reminder_schedule_send(site_id, msg_str):
 
 
 def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs=False):
+    beginning_of_day = target_day.replace(hour=0, minute=0, second=0)
+    users = User.objects.filter(
+        courseenrollment__schedule__upgrade_deadline__gte=beginning_of_day,
+        courseenrollment__schedule__upgrade_deadline__lt=beginning_of_day + datetime.timedelta(days=1),
+        courseenrollment__is_active=True,
+    ).annotate(
+        first_schedule=Min('courseenrollment__schedule__upgrade_deadline')
+    ).annotate(
+        id_mod=F('id') % UPGRADE_REMINDER_NUM_BINS
+    ).filter(
+        id_mod=bin_num
+    )
+
     schedules = Schedule.objects.select_related(
         'enrollment__user__profile',
         'enrollment__course',
-    ).prefetch_related(
-        Prefetch(
-            'enrollment__course__modes',
-            queryset=CourseMode.objects.filter(mode_slug=CourseMode.VERIFIED),
-            to_attr='verified_modes'
-        ),
-        Prefetch(
-            'enrollment__user__preferences',
-            queryset=UserPreference.objects.filter(key='time_zone'),
-            to_attr='tzprefs'
-        ),
-    ).annotate(
-        id_mod=F('enrollment__user__id') % UPGRADE_REMINDER_NUM_BINS
     ).filter(
-        id_mod=bin_num
-    ).filter(
-        upgrade_deadline__year=target_day.year,
-        upgrade_deadline__month=target_day.month,
-        upgrade_deadline__day=target_day.day,
-    )
+        enrollment__user__in=users,
+        upgrade_deadline__gte=beginning_of_day,
+        upgrade_deadline__lt=beginning_of_day + datetime.timedelta(days=1),
+        enrollment__is_active=True,
+    ).order_by('enrollment__user__id')
+
+    if org_list is not None:
+        if exclude_orgs:
+            schedules = schedules.exclude(enrollment__course__org__in=org_list)
+        else:
+            schedules = schedules.filter(enrollment__course__org__in=org_list)
 
     if "read_replica" in settings.DATABASES:
         schedules = schedules.using("read_replica")
