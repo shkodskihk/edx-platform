@@ -215,9 +215,9 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             ScheduleFactory.create(
                 start=datetime.datetime(2017, 8, 3, 19, 44, 30, tzinfo=pytz.UTC),
                 enrollment__user=user,
-                enrollment__course__id=CourseLocator('edX', 'toy', 'Bin{}'.format(idx))
+                enrollment__course__id=CourseLocator('edX', 'toy', 'Course{}'.format(course_num))
             )
-            for idx in range(message_count)
+            for course_num in range(message_count)
         ]
 
         test_time = datetime.datetime(2017, 8, 3, 19, tzinfo=pytz.UTC)
@@ -238,12 +238,11 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             with patch.object(tasks, '_recurring_nudge_schedule_send') as mock_schedule_send:
                 mock_schedule_send.apply_async = lambda args, *_a, **_kw: sent_messages.append(args)
 
-            # FIXME: had to increase this from 2 to 4. Is that okay?
-            with self.assertNumQueries(4):
-                tasks.recurring_nudge_schedule_bin(
-                    self.site_config.site.id, target_day_str=test_time_str, day_offset=day,
-                    bin_num=user.id % tasks.RECURRING_NUDGE_NUM_BINS, org_list=[schedules[0].enrollment.course.org],
-                )
+                with self.assertNumQueries(2):
+                    tasks.recurring_nudge_schedule_bin(
+                        self.site_config.site.id, target_day_str=test_time_str, day_offset=day,
+                        bin_num=user.id % tasks.RECURRING_NUDGE_NUM_BINS, org_list=[schedules[0].enrollment.course.org],
+                    )
 
             self.assertEqual(len(sent_messages), 1)
 
