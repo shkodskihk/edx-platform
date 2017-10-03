@@ -82,7 +82,6 @@ class Command(BaseCommand):
         parser.add_argument('site_domain_name')
 
     def handle(self, *args, **options):
-        days_on_which_to_nudge = (3, 10)
         current_date = datetime.datetime(
             *[int(x) for x in options['date'].split('-')],
             tzinfo=pytz.UTC
@@ -93,5 +92,5 @@ class Command(BaseCommand):
         site = Site.objects.get(domain__iexact=options['site_domain_name'])
         LOG.debug('Scheduled Nudge: Running for site %s', site.domain)
         resolver = ScheduleStartResolver(site, current_date)
-        for day in days_on_which_to_nudge:
+        for day in (3, 10):
             resolver.send(day, options.get('override_recipient_email'))

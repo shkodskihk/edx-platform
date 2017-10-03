@@ -90,7 +90,6 @@ def _recurring_nudge_schedule_send(site_id, msg_str):
 
 
 def _recurring_nudge_schedules_for_hour(target_hour, org_list, exclude_orgs=False):
-
     users, schedules = _gather_users_and_schedules_for_target_hour(target_hour, org_list, exclude_orgs)
 
     dashboard_relative_url = reverse('dashboard')
