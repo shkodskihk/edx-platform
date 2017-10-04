@@ -4,7 +4,7 @@
 Dear {{ user_personal_address }},
 {% endblocktrans %}
 
-{% if courses|length > 1 %}
+{% if course_ids|length > 1 %}
 {% blocktrans trimmed %}
     We hope you are enjoying {{ course_name }}, and other courses on edX.org.
     Upgrade by {{ user_schedule_upgrade_deadline_time }} to get a shareable certificate!

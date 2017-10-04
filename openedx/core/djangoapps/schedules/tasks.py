@@ -233,9 +233,7 @@ def _recurring_nudge_schedules_for_bin(target_day, bin_num, org_list, exclude_or
 
 
 class UpgradeReminder(ScheduleMessageType):
-    def __init__(self, day, *args, **kwargs):
-        super(UpgradeReminder, self).__init__(*args, **kwargs)
-        self.name = "upgradereminder".format(day)
+    pass
 
 
 @task(ignore_result=True, routing_key=ROUTING_KEY)
