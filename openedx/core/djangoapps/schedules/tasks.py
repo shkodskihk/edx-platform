@@ -8,17 +8,16 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
-from django.db.models import F, Min, Prefetch
+from django.db.models import F, Min
 from django.db.utils import DatabaseError
 from django.utils.formats import dateformat, get_format
 
 from edx_ace import ace
 from edx_ace.message import Message
 from edx_ace.recipient import Recipient
-from edx_ace.utils.date import serialize, deserialize
+from edx_ace.utils.date import deserialize
 from opaque_keys.edx.keys import CourseKey
 
-from course_modes.models import CourseMode
 from edxmako.shortcuts import marketing_link
 from openedx.core.djangoapps.schedules.message_type import ScheduleMessageType
 from openedx.core.djangoapps.schedules.models import Schedule, ScheduleConfig
@@ -28,7 +27,6 @@ from openedx.core.djangoapps.schedules.template_context import (
     encode_urls_in_dict,
     get_base_template_context
 )
-from openedx.core.djangoapps.user_api.models import UserPreference
 
 
 LOG = logging.getLogger(__name__)
