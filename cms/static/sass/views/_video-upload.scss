@@ -146,6 +146,10 @@
         display: none;
       }
 
+      .transcript-languages-wrapper .transcript-preferance-label {
+        display: inline-block;
+      }
+
       .transcript-languages-container .languages-container {
         margin-top: ($baseline*0.8);
         .transcript-language-container {
@@ -168,6 +172,9 @@
           display: inline-block;
           .action-add-language {
             @include margin-left($baseline/4);
+          }
+          .error-info {
+            display: inline-block;
           }
         }
       }

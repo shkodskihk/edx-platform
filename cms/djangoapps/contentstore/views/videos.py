@@ -397,12 +397,13 @@ def transcript_org_credentials_handler(request, course_key_string):
     Returns: An empty success response or 404 if transcript feature is not enabled
     """
     course_key = CourseKey.from_string(course_key_string)
-    is_video_transcript_enabled = VideoTranscriptEnabledFlag.feature_enabled(course_key)
-    if not is_video_transcript_enabled:
+    if not VideoTranscriptEnabledFlag.feature_enabled(course_key):
         return HttpResponseNotFound()
 
     org = course_key.org
     provider = request.json.get('provider')
+
+    # TODO: Send organization credentials to edx-pipeline end point.
     credentials = update_organization_transcript_credentials_state(org, provider, exists=True)
 
     return JsonResponse()
