@@ -304,6 +304,7 @@ def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_o
 def get_users_with_target_date_by_bin(schedule_date_field, target_date, bin_num, num_bins=DEFAULT_NUM_BINS):
     """Returns queryset of Users that have schedules that match the target_date and whose id matches the bin_num.
 
+    Arguments:
     schedule_date_field -- string field name to query on the User's Schedule model
     target_date -- datetime day (with zeroed-out time) that the User's Schedule's schedule_date_field value should fall
                    under
@@ -328,6 +329,7 @@ def get_schedules_with_target_date_by_users_and_orgs(schedule_date_field, target
                                                      exclude_orgs=False):
     """Returns queryset of Schedules that match the target_date, related to Users in users, and filtered by org_list.
 
+    Arguments:
     schedule_date_field -- string field name to query on the Schedule model
     target_date -- datetime day (with zeroed-out time) that the Schedule's schedule_date_field value should fall under
     users -- the queryset of Users that the returned Schedules must have relationships with

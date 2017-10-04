@@ -14,7 +14,7 @@ from mock import Mock, patch
 from opaque_keys.edx.keys import CourseKey
 from opaque_keys.edx.locator import CourseLocator
 
-from openedx.core.djangoapps.schedules import tasks
+from openedx.core.djangoapps.schedules import resolvers, tasks
 from openedx.core.djangoapps.schedules.management.commands import send_recurring_nudge as nudge
 from openedx.core.djangoapps.schedules.tests.factories import ScheduleConfigFactory, ScheduleFactory
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteConfigurationFactory, SiteFactory
@@ -50,7 +50,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             mock_resolver().send.assert_any_call(day, None)
 
     @patch.object(tasks, 'ace')
-    @patch.object(nudge, 'recurring_nudge_schedule_bin')
+    @patch.object(resolvers, 'recurring_nudge_schedule_bin')
     def test_resolver_send(self, mock_schedule_bin, mock_ace):
         current_time = datetime.datetime(2017, 8, 1, tzinfo=pytz.UTC)
         nudge.ScheduleStartResolver(self.site_config.site, current_time).send(-3)
@@ -124,7 +124,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         self.assertFalse(mock_ace.send.called)
 
     @patch.object(tasks, 'ace')
-    @patch.object(nudge, 'recurring_nudge_schedule_bin')
+    @patch.object(resolvers, 'recurring_nudge_schedule_bin')
     def test_enqueue_disabled(self, mock_schedule_bin, mock_ace):
         ScheduleConfigFactory.create(site=self.site_config.site, enqueue_recurring_nudge=False)
 
