@@ -10,11 +10,12 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models import F, Min, Prefetch
 from django.db.utils import DatabaseError
+from django.utils.formats import dateformat, get_format
 
 from edx_ace import ace
 from edx_ace.message import Message
 from edx_ace.recipient import Recipient
-from edx_ace.utils.date import deserialize
+from edx_ace.utils.date import serialize, deserialize
 from opaque_keys.edx.keys import CourseKey
 
 from course_modes.models import CourseMode
@@ -304,7 +305,6 @@ def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_o
         user = enrollment.user
 
         course_id_str = str(enrollment.course_id)
-        course = enrollment.course
 
         # TODO: group by schedule and user like recurring nudge
         course_id_strs = [course_id_str]
@@ -314,7 +314,14 @@ def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_o
         template_context.update({
             'student_name': user.profile.name,
             'user_personal_address': user.profile.name if user.profile.name else user.username,
-            'user_schedule_upgrade_deadline_time': schedule.upgrade_deadline,
+            'user_schedule_upgrade_deadline_time': dateformat.format(
+                schedule.upgrade_deadline,
+                get_format(
+                    'DATE_FORMAT',
+                    lang=first_schedule.enrollment.course.language,
+                    use_l10n=True
+                )
+            ),
 
             'course_name': first_schedule.enrollment.course.display_name,
             'course_url': absolute_url(reverse('course_root', args=[str(first_schedule.enrollment.course_id)])),
@@ -323,4 +330,4 @@ def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_o
             'course_ids': course_id_strs,
         })
 
-        yield (user, course.language, template_context)
+        yield (user, first_schedule.enrollment.course.language, template_context)
