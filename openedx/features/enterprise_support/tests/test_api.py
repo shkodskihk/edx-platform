@@ -321,23 +321,25 @@ class TestEnterpriseApi(EnterpriseServiceMockMixin, CacheIsolationTestCase):
         mock_consent_necessary.assert_called_once()
 
     @httpretty.activate
+    @mock.patch('openedx.features.enterprise_support.api.enterprise_customer_uuid_for_request')
     @mock.patch('openedx.features.enterprise_support.api.reverse')
     @mock.patch('openedx.features.enterprise_support.api.consent_needed_for_course')
     def test_get_enterprise_consent_url(
             self,
             needed_for_course_mock,
-            reverse_mock
+            reverse_mock,
+            enterprise_customer_uuid_for_request_mock,
     ):
         """
         Verify that get_enterprise_consent_url correctly builds URLs.
         """
-        self.mock_enterprise_learner_api()
 
         def fake_reverse(*args, **kwargs):
             if args[0] == 'grant_data_sharing_permissions':
                 return '/enterprise/grant_data_sharing_permissions'
             return reverse(*args, **kwargs)
 
+        enterprise_customer_uuid_for_request_mock.return_value = 'cf246b88-d5f6-4908-a522-fc307e0b0c59'
         reverse_mock.side_effect = fake_reverse
         needed_for_course_mock.return_value = True
         request_mock = mock.MagicMock(

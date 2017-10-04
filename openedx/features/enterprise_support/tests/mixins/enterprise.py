@@ -220,7 +220,7 @@ class EnterpriseTestConsentRequired(SimpleTestCase):
     Mixin to help test the data_sharing_consent_required decorator.
     """
 
-    @mock.patch('openedx.features.enterprise_support.api.get_enterprise_learner_data')
+    @mock.patch('openedx.features.enterprise_support.api.enterprise_customer_uuid_for_request')
     @mock.patch('openedx.features.enterprise_support.api.reverse')
     @mock.patch('openedx.features.enterprise_support.api.enterprise_enabled')
     @mock.patch('openedx.features.enterprise_support.api.consent_needed_for_course')
@@ -231,7 +231,7 @@ class EnterpriseTestConsentRequired(SimpleTestCase):
             mock_consent_necessary,
             mock_enterprise_enabled,
             mock_reverse,
-            mock_get_enterprise_learner_data,
+            mock_enterprise_customer_uuid_for_request,
             status_code=200,
     ):
         """
@@ -246,7 +246,7 @@ class EnterpriseTestConsentRequired(SimpleTestCase):
 
         mock_reverse.side_effect = mock_consent_reverse
         mock_enterprise_enabled.return_value = True
-        mock_get_enterprise_learner_data.return_value = [{'enterprise_customer': {'uuid': 'fake-uuid'}}]
+        mock_enterprise_customer_uuid_for_request.return_value = 'fake-uuid'
         # Ensure that when consent is necessary, the user is redirected to the consent page.
         mock_consent_necessary.return_value = True
         response = client.get(url)
