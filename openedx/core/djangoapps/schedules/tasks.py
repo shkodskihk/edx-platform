@@ -239,7 +239,7 @@ def upgrade_reminder_schedule_bin(
     site_id, target_day_str, day_offset, bin_num, org_list, exclude_orgs=False, override_recipient_email=None,
 ):
     target_day = deserialize(target_day_str)
-    msg_type = UpgradeReminder(abs(day_offset))
+    msg_type = UpgradeReminder()
 
     for (user, language, context) in _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs):
         msg = msg_type.personalize(
