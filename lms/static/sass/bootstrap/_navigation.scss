@@ -26,13 +26,11 @@
 
     .course-header {
       display: none;
-      font-size: 1rem;
 
       @include media-breakpoint-up(md) {
         display: block;
-        font-size: $font-size-lg;
+        font-size: $font-size-base;
         font-weight: $font-weight-light;
-        margin: $baseline/2 $baseline/2 0 0;
 
         .provider {
           font-weight: $font-weight-bold;
@@ -104,10 +102,6 @@
           text-transform: initial;
         }
       }
-    }
-
-    .navbar-collapse {
-      flex-basis: auto;
     }
   }
 }

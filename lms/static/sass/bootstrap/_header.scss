@@ -2,12 +2,12 @@
 // ====================
 
 .header-global {
-  .logo img {
-    height: 30px;
-  }
+  .logo-header {
+    margin: 0;
+    padding: 0;
 
-  // User menu
-  .navigation-container .navbar .nav-item .dropdown-toggle {
-    color: inherit;
+    img {
+      height: 30px;
+    }
   }
 }

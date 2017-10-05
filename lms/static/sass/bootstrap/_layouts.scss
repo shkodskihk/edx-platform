@@ -76,7 +76,7 @@
     width: 350px;
 
     @include media-breakpoint-up(md) {
-      margin-left: $baseline;
+      margin-left: $baseline*2;
     }
   }
 }
