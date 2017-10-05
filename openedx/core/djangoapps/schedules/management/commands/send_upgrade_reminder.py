@@ -1,5 +1,3 @@
-import logging
-
 from openedx.core.djangoapps.schedules.management.commands import SendEmailBaseCommand
 from openedx.core.djangoapps.schedules.resolvers import UpgradeReminderResolver
 
@@ -11,5 +9,4 @@ class Command(SendEmailBaseCommand):
         self.log_prefix = 'Upgrade Reminder'
 
     def send_emails(self, resolver, *args, **options):
-        logging.basicConfig(level=logging.DEBUG)
         resolver.send(2, options.get('override_recipient_email'))

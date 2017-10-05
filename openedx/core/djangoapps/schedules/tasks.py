@@ -181,17 +181,11 @@ def recurring_nudge_schedule_bin(
 
 def _recurring_nudge_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs=False):
     beginning_of_day = target_day.replace(hour=0, minute=0, second=0)
-    users = get_users_with_target_date_by_bin(
+    schedules = get_schedules_with_target_date_by_bin_and_orgs(
         schedule_date_field='start',
         target_date=beginning_of_day,
         bin_num=bin_num,
         num_bins=RECURRING_NUDGE_NUM_BINS,
-    )
-
-    schedules = get_schedules_with_target_date_by_users_and_orgs(
-        schedule_date_field='start',
-        target_date=beginning_of_day,
-        users=users,
         org_list=org_list,
         exclude_orgs=exclude_orgs,
     )
@@ -251,17 +245,12 @@ def _upgrade_reminder_schedule_send(site_id, msg_str):
 
 def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_orgs=False):
     beginning_of_day = target_day.replace(hour=0, minute=0, second=0)
-    users = get_users_with_target_date_by_bin(
+
+    schedules = get_schedules_with_target_date_by_bin_and_orgs(
         schedule_date_field='upgrade_deadline',
         target_date=beginning_of_day,
         bin_num=bin_num,
         num_bins=RECURRING_NUDGE_NUM_BINS,
-    )
-
-    schedules = get_schedules_with_target_date_by_users_and_orgs(
-        schedule_date_field='upgrade_deadline',
-        target_date=beginning_of_day,
-        users=users,
         org_list=org_list,
         exclude_orgs=exclude_orgs,
     )
@@ -301,8 +290,10 @@ def _upgrade_reminder_schedules_for_bin(target_day, bin_num, org_list, exclude_o
         yield (user, first_schedule.enrollment.course.language, template_context)
 
 
-def get_users_with_target_date_by_bin(schedule_date_field, target_date, bin_num, num_bins=DEFAULT_NUM_BINS):
-    """Returns queryset of Users that have schedules that match the target_date and whose id matches the bin_num.
+def get_schedules_with_target_date_by_bin_and_orgs(schedule_date_field, target_date, bin_num, num_bins=DEFAULT_NUM_BINS,
+                                                   org_list=None, exclude_orgs=False):
+    """
+    Returns Schedules with the target_date, related to Users whose id matches the bin_num, and filtered by org_list.
 
     Arguments:
     schedule_date_field -- string field name to query on the User's Schedule model
@@ -310,12 +301,15 @@ def get_users_with_target_date_by_bin(schedule_date_field, target_date, bin_num,
                    under
     bin_num -- int for selecting the bin of Users whose id % num_bins == bin_num
     num_bin -- int specifying the number of bins to separate the Users into (default: DEFAULT_NUM_BINS)
+    org_list -- list of course_org names (strings) that the returned Schedules must or must not be in (default: None)
+    exclude_orgs -- boolean indicating whether the returned Schedules should exclude (True) the course_orgs in org_list
+                    or strictly include (False) them (default: False)
     """
     schedule_date_equals_target_date_filter = {
         'courseenrollment__schedule__{}__gte'.format(schedule_date_field): target_date,
         'courseenrollment__schedule__{}__lt'.format(schedule_date_field): target_date + datetime.timedelta(days=1),
     }
-    return User.objects.filter(
+    users = User.objects.filter(
         courseenrollment__is_active=True,
         **schedule_date_equals_target_date_filter
     ).annotate(
@@ -324,19 +318,6 @@ def get_users_with_target_date_by_bin(schedule_date_field, target_date, bin_num,
         id_mod=bin_num
     )
 
-
-def get_schedules_with_target_date_by_users_and_orgs(schedule_date_field, target_date, users, org_list=None,
-                                                     exclude_orgs=False):
-    """Returns queryset of Schedules that match the target_date, related to Users in users, and filtered by org_list.
-
-    Arguments:
-    schedule_date_field -- string field name to query on the Schedule model
-    target_date -- datetime day (with zeroed-out time) that the Schedule's schedule_date_field value should fall under
-    users -- the queryset of Users that the returned Schedules must have relationships with
-    org_list -- list of course_org names (strings) that the returned Schedules must or must not be in (default: None)
-    exclude_orgs -- boolean indicating whether the returned Schedules should exclude (True) the course_orgs in org_list
-                    or strictly include (False) them (default: False)
-    """
     schedule_date_equals_target_date_filter = {
         '{}__gte'.format(schedule_date_field): target_date,
         '{}__lt'.format(schedule_date_field): target_date + datetime.timedelta(days=1),
