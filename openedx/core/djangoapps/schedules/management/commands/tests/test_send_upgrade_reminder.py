@@ -40,7 +40,7 @@ class TestUpgradeReminder(CacheIsolationTestCase):
         self.site_config = SiteConfigurationFactory.create(site=site)
         ScheduleConfigFactory.create(site=self.site_config.site)
 
-    @patch.object(reminder, 'UpgradeReminderResolver')
+    @patch.object(reminder.Command, 'resolver_class')
     def test_handle(self, mock_resolver):
         test_time = datetime.datetime(2017, 8, 1, tzinfo=pytz.UTC)
         reminder.Command().handle(date='2017-08-01', site_domain_name=self.site_config.site.domain)
@@ -49,7 +49,7 @@ class TestUpgradeReminder(CacheIsolationTestCase):
         mock_resolver().send.assert_any_call(2, None)
 
     @patch.object(tasks, 'ace')
-    @patch.object(resolvers, 'upgrade_reminder_schedule_bin')
+    @patch.object(resolvers.UpgradeReminderResolver, 'async_send_task')
     def test_resolver_send(self, mock_schedule_bin, mock_ace):
         current_time = datetime.datetime(2017, 8, 1, tzinfo=pytz.UTC)
         test_time = current_time + datetime.timedelta(days=2)
@@ -125,7 +125,7 @@ class TestUpgradeReminder(CacheIsolationTestCase):
         self.assertFalse(mock_ace.send.called)
 
     @patch.object(tasks, 'ace')
-    @patch.object(resolvers, 'upgrade_reminder_schedule_bin')
+    @patch.object(resolvers.UpgradeReminderResolver, 'async_send_task')
     def test_enqueue_disabled(self, mock_schedule_bin, mock_ace):
         ScheduleConfigFactory.create(site=self.site_config.site, enqueue_upgrade_reminder=False)
 

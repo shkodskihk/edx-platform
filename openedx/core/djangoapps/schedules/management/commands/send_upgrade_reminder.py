@@ -3,9 +3,10 @@ from openedx.core.djangoapps.schedules.resolvers import UpgradeReminderResolver
 
 
 class Command(SendEmailBaseCommand):
+    resolver_class = UpgradeReminderResolver
+
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        self.resolver_class = UpgradeReminderResolver
         self.log_prefix = 'Upgrade Reminder'
 
     def send_emails(self, resolver, *args, **options):

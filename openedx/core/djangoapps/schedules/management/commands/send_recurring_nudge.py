@@ -3,9 +3,10 @@ from openedx.core.djangoapps.schedules.resolvers import ScheduleStartResolver
 
 
 class Command(SendEmailBaseCommand):
+    resolver_class = ScheduleStartResolver
+
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        self.resolver_class = ScheduleStartResolver
         self.log_prefix = 'Scheduled Nudge'
 
     def send_emails(self, resolver, *args, **options):

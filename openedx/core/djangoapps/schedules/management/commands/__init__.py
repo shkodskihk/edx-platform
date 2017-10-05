@@ -7,11 +7,11 @@ from django.core.management.base import BaseCommand
 from openedx.core.djangoapps.schedules.utils import PrefixedDebugLoggerMixin
 
 
-class SendEmailBaseCommand(BaseCommand, PrefixedDebugLoggerMixin):
+class SendEmailBaseCommand(PrefixedDebugLoggerMixin, BaseCommand):
+    resolver_class = None  # define in subclass
+
     def __init__(self, *args, **kwargs):
         super(SendEmailBaseCommand, self).__init__(*args, **kwargs)
-        self.resolver_class = None  # define in subclass
-        self.log_prefix = self.__class__.__name__
 
     def add_arguments(self, parser):
         parser.add_argument(

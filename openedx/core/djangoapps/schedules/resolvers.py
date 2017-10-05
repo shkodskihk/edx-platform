@@ -15,25 +15,27 @@ from openedx.core.djangoapps.schedules.utils import PrefixedDebugLoggerMixin
 from openedx.core.djangoapps.site_configuration.models import SiteConfiguration
 
 
-class BinnedSchedulesBaseResolver(RecipientResolver, PrefixedDebugLoggerMixin):
+class BinnedSchedulesBaseResolver(PrefixedDebugLoggerMixin, RecipientResolver):
     """
     Starts num_bins number of async tasks, each of which sends emails to an equal group of learners.
 
     Arguments:
         site -- Site object that filtered Schedules will be a part of
         current_date -- datetime that will be used (with time zeroed-out) as the current date in the queries
+
+    Static attributes:
         async_send_task -- celery task function which this resolver will call out to
         num_bins -- the int number of bins to split the users into
         enqueue_config_var -- the string field name of the config variable on ScheduleConfig to check before enqueuing
     """
+    async_send_task = None  # define in subclass
+    num_bins = DEFAULT_NUM_BINS
+    enqueue_config_var = None  # define in subclass
+
     def __init__(self, site, current_date, *args, **kwargs):
         super(BinnedSchedulesBaseResolver, self).__init__(*args, **kwargs)
         self.site = site
         self.current_date = current_date.replace(hour=0, minute=0, second=0)
-        self.async_send_task = None  # define in subclasses
-        self.num_bins = DEFAULT_NUM_BINS
-        self.enqueue_config_var = None  # define in subclasses
-        self.log_prefix = self.__class__.__name__
 
     def send(self, day_offset, override_recipient_email=None):
         if not self.is_enqueue_enabled():
@@ -96,21 +98,23 @@ class ScheduleStartResolver(BinnedSchedulesBaseResolver):
     """
     Send a message to all users whose schedule started at ``self.current_date`` + ``day_offset``.
     """
+    async_send_task = recurring_nudge_schedule_bin
+    num_bins = RECURRING_NUDGE_NUM_BINS
+    enqueue_config_var = 'enqueue_recurring_nudge'
+
     def __init__(self, *args, **kwargs):
         super(ScheduleStartResolver, self).__init__(*args, **kwargs)
-        self.async_send_task = recurring_nudge_schedule_bin
-        self.num_bins = RECURRING_NUDGE_NUM_BINS
         self.log_prefix = 'Scheduled Nudge'
-        self.enqueue_config_var = 'enqueue_recurring_nudge'
 
 
 class UpgradeReminderResolver(BinnedSchedulesBaseResolver):
     """
     Send a message to all users whose verified upgrade deadline is at ``self.current_date`` + ``day_offset``.
     """
+    async_send_task = upgrade_reminder_schedule_bin
+    num_bins = UPGRADE_REMINDER_NUM_BINS
+    enqueue_config_var = 'enqueue_upgrade_reminder'
+
     def __init__(self, *args, **kwargs):
         super(UpgradeReminderResolver, self).__init__(*args, **kwargs)
-        self.async_send_task = upgrade_reminder_schedule_bin
-        self.num_bins = UPGRADE_REMINDER_NUM_BINS
         self.log_prefix = 'Upgrade Reminder'
-        self.enqueue_config_var = 'enqueue_upgrade_reminder'

@@ -40,7 +40,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         self.site_config = SiteConfigurationFactory.create(site=site)
         ScheduleConfigFactory.create(site=self.site_config.site)
 
-    @patch.object(nudge, 'ScheduleStartResolver')
+    @patch.object(nudge.Command, 'resolver_class')
     def test_handle(self, mock_resolver):
         test_time = datetime.datetime(2017, 8, 1, tzinfo=pytz.UTC)
         nudge.Command().handle(date='2017-08-01', site_domain_name=self.site_config.site.domain)
@@ -50,7 +50,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             mock_resolver().send.assert_any_call(day, None)
 
     @patch.object(tasks, 'ace')
-    @patch.object(resolvers, 'recurring_nudge_schedule_bin')
+    @patch.object(resolvers.ScheduleStartResolver, 'async_send_task')
     def test_resolver_send(self, mock_schedule_bin, mock_ace):
         current_time = datetime.datetime(2017, 8, 1, tzinfo=pytz.UTC)
         nudge.ScheduleStartResolver(self.site_config.site, current_time).send(-3)
@@ -124,7 +124,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
         self.assertFalse(mock_ace.send.called)
 
     @patch.object(tasks, 'ace')
-    @patch.object(resolvers, 'recurring_nudge_schedule_bin')
+    @patch.object(resolvers.ScheduleStartResolver, 'async_send_task')
     def test_enqueue_disabled(self, mock_schedule_bin, mock_ace):
         ScheduleConfigFactory.create(site=self.site_config.site, enqueue_recurring_nudge=False)
 
