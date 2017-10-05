@@ -10,9 +10,6 @@ from openedx.core.djangoapps.schedules.utils import PrefixedDebugLoggerMixin
 class SendEmailBaseCommand(PrefixedDebugLoggerMixin, BaseCommand):
     resolver_class = None  # define in subclass
 
-    def __init__(self, *args, **kwargs):
-        super(SendEmailBaseCommand, self).__init__(*args, **kwargs)
-
     def add_arguments(self, parser):
         parser.add_argument(
             '--date',
@@ -42,4 +39,4 @@ class SendEmailBaseCommand(PrefixedDebugLoggerMixin, BaseCommand):
         return self.resolver_class(site, current_date)
 
     def send_emails(self, resolver, *args, **options):
-        resolver.send(0, options.get('override_recipient_email'))
+        pass  # define in subclass

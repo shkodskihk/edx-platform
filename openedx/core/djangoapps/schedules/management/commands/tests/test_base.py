@@ -4,7 +4,7 @@ from unittest import skipUnless
 import ddt
 import pytz
 from django.conf import settings
-from mock import Mock, patch
+from mock import patch
 
 from openedx.core.djangoapps.schedules.management.commands import SendEmailBaseCommand
 from openedx.core.djangoapps.site_configuration.tests.factories import SiteFactory
@@ -30,11 +30,6 @@ class TestSendEmailBaseCommand(CacheIsolationTestCase):
                 example_site,
                 datetime.datetime(2017, 9, 29, tzinfo=pytz.UTC)
             )
-
-    def test_send_emails(self):
-        resolver = Mock()
-        self.command.send_emails(resolver, override_recipient_email='foo@example.com')
-        resolver.send.assert_called_once_with(0, 'foo@example.com')
 
     def test_handle(self):
         with patch.object(self.command, 'make_resolver') as make_resolver:

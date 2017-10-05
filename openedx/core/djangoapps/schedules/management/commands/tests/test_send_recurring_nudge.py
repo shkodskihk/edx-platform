@@ -80,8 +80,9 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
 
         test_time = datetime.datetime(2017, 8, 3, 18, tzinfo=pytz.UTC)
         test_time_str = serialize(test_time)
-        with self.assertNumQueries(25):
-            for b in range(tasks.RECURRING_NUDGE_NUM_BINS):
+        for b in range(tasks.RECURRING_NUDGE_NUM_BINS):
+            # waffle flag takes an extra query before it is cached
+            with self.assertNumQueries(2 if b == 0 else 1):
                 tasks.recurring_nudge_schedule_bin(
                     self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
                     org_list=[schedules[0].enrollment.course.org],
@@ -100,8 +101,9 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
 
         test_time = datetime.datetime(2017, 8, 3, 20, tzinfo=pytz.UTC)
         test_time_str = serialize(test_time)
-        with self.assertNumQueries(25):
-            for b in range(tasks.RECURRING_NUDGE_NUM_BINS):
+        for b in range(tasks.RECURRING_NUDGE_NUM_BINS):
+            # waffle flag takes an extra query before it is cached
+            with self.assertNumQueries(2 if b == 0 else 1):
                 tasks.recurring_nudge_schedule_bin(
                     self.site_config.site.id, target_day_str=test_time_str, day_offset=-3, bin_num=b,
                     org_list=[schedule.enrollment.course.org],
