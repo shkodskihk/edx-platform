@@ -97,6 +97,7 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             for _ in range(schedule_count)
         ]
 
+        # Make it check with enrollment service on and off.
         test_time_str = serialize(datetime.datetime(2017, 8, 1, 18, tzinfo=pytz.UTC))
         with self.assertNumQueries(CONST_QUERIES + SCHEDULE_QUERIES + PER_COURSE_QUERIES):
             tasks.recurring_nudge_schedule_hour(
@@ -256,15 +257,16 @@ class TestSendRecurringNudge(CacheIsolationTestCase):
             with patch.object(tasks, '_recurring_nudge_schedule_send') as mock_schedule_send:
                 mock_schedule_send.apply_async = lambda args, *_a, **_kw: sent_messages.append(args)
 
-            with self.assertNumQueries(CONST_QUERIES + SCHEDULE_QUERIES + PER_COURSE_QUERIES + SEND_QUERIES):
-                tasks.recurring_nudge_schedule_hour(
-                    self.site_config.site.id, day, test_time_str, [schedules[0].enrollment.course.org],
-                )
+                with self.assertNumQueries(CONST_QUERIES + SCHEDULE_QUERIES + PER_COURSE_QUERIES):
+                    tasks.recurring_nudge_schedule_hour(
+                        self.site_config.site.id, day, test_time_str, [schedules[0].enrollment.course.org],
+                    )
 
             self.assertEqual(len(sent_messages), 1)
 
-            for args in sent_messages:
-                tasks._recurring_nudge_schedule_send(*args)
+            with self.assertNumQueries(SEND_QUERIES):
+                for args in sent_messages:
+                    tasks._recurring_nudge_schedule_send(*args)
 
             self.assertEqual(mock_channel.deliver.call_count, 1)
             for (_name, (_msg, email), _kwargs) in mock_channel.deliver.mock_calls:
