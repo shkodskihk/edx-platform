@@ -54,7 +54,7 @@ from openedx.features.course_experience import UNIFIED_COURSE_TAB_FLAG, SHOW_REV
             </div>
         </div>
     </header>
-    <section class="page-content">
+    <div class="page-content">
         <main class="page-content-main">
 
             % if upgrade_url and upgrade_price:
@@ -132,7 +132,7 @@ from openedx.features.course_experience import UNIFIED_COURSE_TAB_FLAG, SHOW_REV
                 </div>
             % endif
         </aside>
-    </section>
+    </div>
     % if course_sock_fragment:
         ${HTML(course_sock_fragment.body_html())}
     % endif
