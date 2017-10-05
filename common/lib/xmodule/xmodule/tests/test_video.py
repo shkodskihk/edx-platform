@@ -623,8 +623,8 @@ class VideoDescriptorImportTestCase(unittest.TestCase):
             'data': ''
         })
 
-    @patch('xmodule.video_module.video_module.edxval_api')
-    def test_import_val_data(self, mock_val_api):
+    @patch('edxval.api.import_from_xml')
+    def test_import_val_data(self, mock_val_api_import_from_xml):
         def mock_val_import(xml, edx_video_id, course_id):
             """Mock edxval.api.import_from_xml"""
             self.assertEqual(xml.tag, 'video_asset')
@@ -632,7 +632,7 @@ class VideoDescriptorImportTestCase(unittest.TestCase):
             self.assertEqual(edx_video_id, 'test_edx_video_id')
             self.assertEqual(course_id, 'test_course_id')
 
-        mock_val_api.import_from_xml = Mock(wraps=mock_val_import)
+        mock_val_api_import_from_xml.configure_mock(_mock_wraps=mock_val_import)
         module_system = DummySystem(load_error_modules=True)
 
         # import new edx_video_id
@@ -646,12 +646,13 @@ class VideoDescriptorImportTestCase(unittest.TestCase):
         video = VideoDescriptor.from_xml(xml_data, module_system, id_generator)
 
         self.assert_attributes_equal(video, {'edx_video_id': 'test_edx_video_id'})
-        mock_val_api.import_from_xml.assert_called_once_with(ANY, 'test_edx_video_id', course_id='test_course_id')
+        mock_val_api_import_from_xml.assert_called_once_with(ANY, 'test_edx_video_id', course_id='test_course_id')
 
-    @patch('xmodule.video_module.video_module.edxval_api')
-    def test_import_val_data_invalid(self, mock_val_api):
-        mock_val_api.ValCannotCreateError = _MockValCannotCreateError
-        mock_val_api.import_from_xml = Mock(side_effect=mock_val_api.ValCannotCreateError)
+    @patch('edxval.api.ValCannotCreateError')
+    @patch('edxval.api.import_from_xml')
+    def test_import_val_data_invalid(self, mock_val_api_import_from_xml, mock_val_api_err):
+        mock_val_api_err = _MockValCannotCreateError
+        mock_val_api_import_from_xml.configure_mock(side_effect=mock_val_api_err)
         module_system = DummySystem(load_error_modules=True)
 
         # Negative duration is invalid
@@ -660,7 +661,7 @@ class VideoDescriptorImportTestCase(unittest.TestCase):
                 <video_asset client_video_id="test_client_video_id" duration="-1"/>
             </video>
         """
-        with self.assertRaises(mock_val_api.ValCannotCreateError):
+        with self.assertRaises(_MockValCannotCreateError):
             VideoDescriptor.from_xml(xml_data, module_system, id_generator=Mock())
 
 
@@ -668,8 +669,8 @@ class VideoExportTestCase(VideoDescriptorTestBase):
     """
     Make sure that VideoDescriptor can export itself to XML correctly.
     """
-    @patch('xmodule.video_module.video_module.edxval_api')
-    def test_export_to_xml(self, mock_val_api):
+    @patch('edxval.api.export_to_xml')
+    def test_export_to_xml(self, mock_val_api_export_to_xml):
         """
         Test that we write the correct XML on export.
         """
@@ -679,8 +680,7 @@ class VideoExportTestCase(VideoDescriptorTestBase):
                 'video_asset',
                 attrib={'export_edx_video_id': edx_video_id}
             )
-
-        mock_val_api.export_to_xml = mock_val_export
+        mock_val_api_export_to_xml.configure_mock(_mock_wraps=mock_val_export)
         self.descriptor.youtube_id_0_75 = 'izygArpw-Qo'
         self.descriptor.youtube_id_1_0 = 'p2Q6BrNhdh8'
         self.descriptor.youtube_id_1_25 = '1EeWXzPdhSA'
@@ -713,11 +713,11 @@ class VideoExportTestCase(VideoDescriptorTestBase):
         expected = etree.XML(xml_string, parser=parser)
         self.assertXmlEqual(expected, xml)
 
-    @patch('xmodule.video_module.video_module.edxval_api')
-    def test_export_to_xml_val_error(self, mock_val_api):
+    @patch('edxval.api.export_to_xml')
+    def test_export_to_xml_val_error(self, mock_val_api_export_to_xml):
         # Export should succeed without VAL data if video does not exist
-        mock_val_api.ValVideoNotFoundError = _MockValVideoNotFoundError
-        mock_val_api.export_to_xml = Mock(side_effect=mock_val_api.ValVideoNotFoundError)
+        from edxval.api import ValVideoNotFoundError
+        mock_val_api_export_to_xml.configure_mock(side_effect=ValVideoNotFoundError)
         self.descriptor.edx_video_id = 'test_edx_video_id'
         self.descriptor.runtime.course_id = MagicMock()
 
